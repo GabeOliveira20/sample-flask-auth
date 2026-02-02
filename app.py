@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 from database import db
-from flask_login import LoginManager, login_user
+from flask_login import LoginManager, login_user, current_user
 from models.user import User
 
 def create_app():
@@ -12,6 +12,7 @@ def create_app():
     db.init_app(app)
     login_manager = LoginManager()
     login_manager.init_app(app)
+    login_manager.login_view = 'login'
 
     # Callback para carregar usuário
     @login_manager.user_loader
@@ -27,12 +28,10 @@ def create_app():
 
         user = User.query.filter_by(username=username).first()
 
-        if user and password: 
-            #Login
-            user = User.query.filter_by(username=username).first()
-
-            if user and password == password:
-                return jsonify({"message": "Autenticação realizada com sucesso"}), 200
+        if user and user.password == password:  # comparação correta
+            login_user(user)
+            print(current_user.is_authenticated)
+            return jsonify({"message": "Autenticação realizada com sucesso"}), 200
 
         return jsonify({"message": "Credenciais inválidas"}), 400
 
